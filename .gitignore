@@ -163,3 +163,4 @@ cython_debug/
 #.idea/
 
 /past_keyword.txt
+/past_keyword.json

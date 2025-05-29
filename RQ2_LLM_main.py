@@ -74,13 +74,13 @@ class KeywordGenerator:
 
     def __save_past_keyword(self):
         self.past_keyword.extend(self.new_keyword)
-        with open("past_keyword.txt", "w", encoding="utf-8") as f:
+        with open("past_keyword.json", "w", encoding="utf-8") as f:
             json.dump(self.past_keyword, f, ensure_ascii=False, indent=2)
 
     def __load_past_keyword(self):
-        if not os.path.exists("past_keyword.txt"):
+        if not os.path.exists("past_keyword.json"):
             return
-        with open("past_keyword.txt", "r", encoding="utf-8") as f:
+        with open("past_keyword.json", "r", encoding="utf-8") as f:
             self.past_keyword = json.load(f)
 
     def get_new_keyword(self):
