@@ -7,7 +7,7 @@ import json
 
 
 class KeywordGenerator:
-    def __init__(self, max_keywords=100, min_keywords=10):
+    def __init__(self, max_keywords=100, min_keywords=10, model_name="gpt-4.1-nano", model_temp=1.1, max_past_keyword=1000):
         self.max_keywords = max_keywords
         self.min_keywords = min_keywords
         self.past_keyword = list()
@@ -15,6 +15,10 @@ class KeywordGenerator:
 
         load_dotenv()
         self.openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.model_name = model_name
+        self.model_temp = model_temp
+        self.max_past_keyword = max_past_keyword
+
         self.__load_past_keyword()
 
     def generate_traffic_keywords_auto_by_openai(self):
@@ -43,11 +47,10 @@ class KeywordGenerator:
             }
         ]
 
-
         # 2) ChatCompletion 호출: system 메시지만 던져서 모델이 extract_keywords 함수를 호출하도록
         print(f"Past Keyword: {self.past_keyword}")
         response = self.openai.chat.completions.create(
-            model="gpt-4.1-nano",
+            model=self.model_name,
             messages=[
                 ChatCompletionSystemMessageParam(
                     role="system",
@@ -62,18 +65,19 @@ class KeywordGenerator:
             function_call=ChatCompletionFunctionCallOptionParam(
                 name="extract_keywords"
             ),
-            temperature=1.2,
+            temperature=self.model_temp,
             timeout=60
         )
 
         msg = response.choices[0].message.function_call.arguments
         json_args = json.loads(msg)
         print(json_args)  # 실제 값 확인
-        self.new_keyword= json_args.get("keywords", "생성 실패")
+        self.new_keyword = json_args.get("keywords", "생성 실패")
         self.__save_past_keyword()
 
     def __save_past_keyword(self):
         self.past_keyword.extend(self.new_keyword)
+        self.__cut_past_keyword()
         with open("past_keyword.json", "w", encoding="utf-8") as f:
             json.dump(self.past_keyword, f, ensure_ascii=False, indent=2)
 
@@ -82,6 +86,12 @@ class KeywordGenerator:
             return
         with open("past_keyword.json", "r", encoding="utf-8") as f:
             self.past_keyword = json.load(f)
+            self.__cut_past_keyword()
+
+    def __cut_past_keyword(self):
+        print(f"past_keyword_len: {len(self.past_keyword)}")
+        if len(self.past_keyword) > self.max_past_keyword:
+            self.past_keyword = self.past_keyword[-self.max_past_keyword:]
 
     def get_new_keyword(self):
         while self.new_keyword:
@@ -99,7 +109,6 @@ if __name__ == "__main__":
     print(f"\n\n생성된 키워드 1({keyword_generator.get_num_new_keyword()}개):")
     for kw in keyword_generator.get_new_keyword():
         print("-", kw)
-
 
     keyword_generator.generate_traffic_keywords_auto_by_openai()
     print(f"\n\n생성된 키워드 2({keyword_generator.get_num_new_keyword()}개):")
