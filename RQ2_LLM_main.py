@@ -5,9 +5,6 @@ import os
 import sys
 import json
 
-load_dotenv()
-openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
 class KeywordGenerator:
     def __init__(self, max_keywords=100, min_keywords=10):
@@ -16,6 +13,8 @@ class KeywordGenerator:
         self.past_keyword = list()
         self.new_keyword = list()
 
+        load_dotenv()
+        self.openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.__load_past_keyword()
 
     def generate_traffic_keywords_auto_by_openai(self):
@@ -47,7 +46,7 @@ class KeywordGenerator:
 
         # 2) ChatCompletion 호출: system 메시지만 던져서 모델이 extract_keywords 함수를 호출하도록
         print(f"Past Keyword: {self.past_keyword}")
-        response = openai.chat.completions.create(
+        response = self.openai.chat.completions.create(
             model="gpt-4.1-nano",
             messages=[
                 ChatCompletionSystemMessageParam(
