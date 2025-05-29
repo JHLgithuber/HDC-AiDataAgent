@@ -16,6 +16,8 @@ class KeywordGenerator:
         self.past_keyword = list()
         self.new_keyword = list()
 
+        self.__load_past_keyword()
+
     def generate_traffic_keywords_auto_by_openai(self):
         """
         시스템 메시지만으로 교통사고 영상 검색에 쓸 수 있는
@@ -69,7 +71,18 @@ class KeywordGenerator:
         json_args = json.loads(msg)
         print(json_args)  # 실제 값 확인
         self.new_keyword= json_args.get("keywords", "생성 실패")
+        self.__save_past_keyword()
+
+    def __save_past_keyword(self):
         self.past_keyword.extend(self.new_keyword)
+        with open("past_keyword.txt", "w", encoding="utf-8") as f:
+            json.dump(self.past_keyword, f, ensure_ascii=False, indent=2)
+
+    def __load_past_keyword(self):
+        if not os.path.exists("past_keyword.txt"):
+            return
+        with open("past_keyword.txt", "r", encoding="utf-8") as f:
+            self.past_keyword = json.load(f)
 
     def get_new_keyword(self):
         while self.new_keyword:
